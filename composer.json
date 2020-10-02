@@ -4,5 +4,11 @@
     },
     "require": {
         "symfony/console": "^5.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Console\\": "src"
+        },
+        "classmap": ["src"]
     }
 }

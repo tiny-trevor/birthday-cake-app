@@ -5,9 +5,11 @@
     require_once __DIR__ . '/vendor/autoload.php';
     
     use Symfony\Component\Console\Application;
+    use Console\CakeCommand;
     
-    $console = new Application();
-    $console->run();
+    $app = new Application();
+    $app->add(new CakeCommand());
+    $app->run();
     
 
     

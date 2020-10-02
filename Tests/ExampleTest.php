@@ -4,7 +4,7 @@
     
     final class ExampleTest extends TestCase
     {
-        public function testing_works()
+        public function test_phpunit_works()
         {
             $this->assertTrue(true);
         }
