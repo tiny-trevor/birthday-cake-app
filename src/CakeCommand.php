@@ -19,7 +19,13 @@
         
         public function execute(InputInterface $input, OutputInterface $output)
         {
-            $this->getBirthdayCakes($input, $output);
+            try {
+                $this->getBirthdayCakes($input, $output);
+            }
+            catch(\Exception $e) {
+                error_log($e->getMessage());
+            }
+    
             return 0;
         }
     }

@@ -16,12 +16,26 @@
         protected function getBirthdayCakes(InputInterface $input, OutputInterface $output)
         {
         
+            //Add the Title of the App
             $output->writeln([
                 '===Birthday Cakes===',
                 ''
             ]);
             
-            $output->writeln($input->getArgument('filepath'));
+            //Pass input filepath to function
+            $fileContents = $this->getData($input->getArgument('filepath'));
             
+            //Write in the data from the file
+            $output->writeln($fileContents);
+            
+        }
+        
+        private function getData(String $filepath) {
+            
+            if(!file_exists($filepath)) {
+                throw new \Exception("File '{$filepath}' not found, please try again.");
+            }
+            
+            return file($filepath);
         }
     }
