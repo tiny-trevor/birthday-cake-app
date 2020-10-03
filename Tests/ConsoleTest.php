@@ -52,6 +52,26 @@
             $this->assertStringContainsString('===Birthday Cakes===', $output);
             
         }
+    
+        public function test_console_shows_exception_message()
+        {
+            $application = new Application();
+        
+            //Given an Application
+            $command = $application->add(new CakeCommand());
+            $commandTester = new CommandTester($command);
+        
+            //And given a nonexistent file path
+            $commandTester->execute([
+                //pass arguments to the helper
+                'filepath' => 'idonotexist.txt',
+            ]);
+        
+            //Verify that the console executes and shows the error message
+            $output = $commandTester->getDisplay();
+            $this->assertStringContainsString("Error: ", $output);
+        
+        }
         
         protected function tearDown():void
         {
