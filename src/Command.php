@@ -144,7 +144,7 @@
               
             foreach($data as $name => $full_date) {
                 
-                while(in_array($full_date->format('m-d'), $company_holidays)) {
+                while(in_array($full_date->format('m-d'), $company_holidays) || $full_date->isWeekend()) {
                     $full_date->addDay();
                 }
                 
@@ -178,7 +178,7 @@
                 
                 do {
                     $full_date->addDay();
-                } while(in_array($full_date->format('m-d'), $company_holidays));
+                } while(in_array($full_date->format('m-d'), $company_holidays) || $full_date->isWeekend());
             
                 $birthday_skipped[$name] = $full_date;
             
