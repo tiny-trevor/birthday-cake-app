@@ -253,8 +253,18 @@
                 $t2 = strtotime($b['date']);
                 return $t1 - $t2;
         }
-        
-        public function createCSV($data)
+    
+        /**
+         * Create CSV file in current main directory (/birthday-cake) out of cake day data
+         * Filename: 'cakedays-d-m-Y.csv'
+         * Running the script twice on the same day will overwrite the file
+         * Return filepath to newly created CSV
+         *
+         * @param $data
+         * @return string
+         * @throws \Exception
+         */
+        private function createCSV($data)
         {
             $date = (new Carbon())->format('d-m-Y');
             
@@ -284,6 +294,7 @@
 
             return "CSV File successfully created and stored in: " . realpath($filename);
         }
+        
         
         /**
          * Validate that the filepath provided:
