@@ -5,7 +5,8 @@
     },
     "require": {
         "symfony/console": "^5.1",
-        "nesbot/carbon": "^2.40"
+        "nesbot/carbon": "^2.40",
+        "ext-json": "*"
     },
     "autoload": {
         "psr-4": {

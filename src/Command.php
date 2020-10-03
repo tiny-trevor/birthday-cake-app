@@ -1,6 +1,8 @@
 <?php
     namespace Console;
 
+    use Carbon\Carbon;
+    use DateTime;
     use Symfony\Component\Console\Command\Command as SymfonyCommand;
     use Symfony\Component\Console\Input\InputInterface;
     use Symfony\Component\Console\Output\OutputInterface;
@@ -47,7 +49,8 @@
         {
             
             if($this->validateFile($filepath)){
-                return print_r($this->extractData($filepath), true);
+                $data = $this->extractData($filepath);
+                return $this->mapCompanyHolidays($data);
             }
             else {
                 throw new \Exception("An unknown error occurred.");
@@ -55,6 +58,13 @@
             
         }
     
+        /**
+         * Extract Data from given File and return as array
+         *
+         * @param $filepath
+         * @return array
+         * @throws \Exception
+         */
         public function extractData($filepath)
         {
             $file_array = file($filepath);
@@ -65,17 +75,75 @@
             
                 //Make sure the line passes validation
                 if(!$this->validateData($file_line)) {
-                    throw new \Exception("Data must be in format of 'Name, yyyy-mm-dd'.");
+                    throw new \Exception("Data must be in format of 'Name, yyyy-mm-dd'. ({$file_line})");
                 }
             
-                //Separate line into Name=>Date
-                $line_data = explode(",", $file_line);
-            
-                $data[trim($line_data[0])]= trim($line_data[1]);
+                //Separate line & trim into Name=>Date
+                list($name, $date_raw) = array_map('trim', explode(",", $file_line));
+                
+                $data[$name]= $date_raw;
             }
         
             return $data;
         
+        }
+    
+        /**
+         * Map the given Birthday Data against the Company Holidays
+         * If a Birthday falls on a Company Holiday, add a day, until it no longer does.
+         *
+         * @param $data
+         * @return array
+         * @throws \Exception
+         */
+        public function mapCompanyHolidays($data)
+        {
+            //Get an array of company holidays
+            $company_holidays = $this->getCompanyHolidays();
+            
+            $holidays_mapped = [];
+              
+            foreach($data as $name => $raw_date) {
+                
+                $full_date = new Carbon($raw_date);
+                
+                while(in_array($full_date->format('m-d'), $company_holidays)) {
+                    $full_date->addDay();
+                }
+                
+                $holidays_mapped[$name] = $full_date->format('m-d');
+            }
+            
+            return $holidays_mapped;
+    
+        }
+    
+        /**
+         * Get the company holidays in an array of mm-dd, from the specified file
+         * Throw an exception if the file does not exist
+         *
+         * @return array
+         * @throws \Exception
+         */
+        public function getCompanyHolidays()
+        {
+            $holidays_file = __DIR__ . '/companyholidays.json';
+            
+            //TODO: (OPTIONAL) automatically make file?
+            if(!file_exists($holidays_file)) {
+                throw new \Exception("File '{$holidays_file}' not found. Please ensure it exists and try again");
+            }
+            
+            $holidays_json = file_get_contents($holidays_file);
+            $holidays_array = json_decode($holidays_json);
+
+            $company_holidays = [];
+
+            foreach ($holidays_array as $holiday) {
+                array_push($company_holidays, $holiday->date);
+            }
+    
+            return $company_holidays;
         }
     
         /**
@@ -121,6 +189,7 @@
          */
         private function validateData($file_line)
         {
+            //TODO: Date must be a real date.
             $line_pattern = '/((,)(\s*)(\d{4})(-\d{2}){2})$/';
     
             if(preg_match($line_pattern, $file_line)){

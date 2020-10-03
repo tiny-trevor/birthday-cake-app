@@ -54,4 +54,20 @@
             $class->validateFile($root->url().'/idonotexist.jpeg');
         
         }
+        
+        public function test_company_holidays_file_must_exist()
+        {
+            //Given a new instance of the application base class
+            $class = new CakeCommand();
+            
+            //And Given a virtual empty root directory
+            $root = vfsStream::setup('root');
+    
+            //Verify that an exception is called
+            $this->expectException(Exception::class);
+    
+            //When the companyholidays.json file does not exist
+            $class->validateFile($root->url().'/companyholidays.json');
+            
+        }
     }
