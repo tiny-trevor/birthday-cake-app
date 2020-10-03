@@ -1,5 +1,6 @@
 <?php
     
+    use Carbon\Carbon;
     use Console\CakeCommand;
     use org\bovigo\vfs\vfsStream;
     use PHPUnit\Framework\TestCase;
@@ -70,6 +71,32 @@
             //Verify that the console executes and shows the error message
             $output = $commandTester->getDisplay();
             $this->assertStringContainsString("Error: ", $output);
+        
+        }
+        
+        public function test_function_success_creates_csv_file()
+        {
+            $application = new Application();
+        
+            //Given an Application
+            $command = $application->add(new CakeCommand());
+            $commandTester = new CommandTester($command);
+    
+            //And given a file path, using...
+            //Abstract file system and populate using setup string
+            $root = vfsStream::setup('root', null, $this->file);
+    
+            $commandTester->execute([
+                //pass arguments to the helper
+                'filepath' => $root->url().'/birthdays.txt',
+            ]);
+            
+            //Construct the name of the csv file
+            $date = (new Carbon())->format('d-m-Y');
+            $filename = 'cakedays-'.$date.'.csv';
+        
+            //Verify that a csv file has been created
+            $this->assertFileExists($filename);
         
         }
         

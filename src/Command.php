@@ -51,10 +51,12 @@
                 $data = $this->extractData($filepath);
                 $company_holidays_data = $this->mapCompanyHolidays($data);
                 $skip_birthdays = $this->skipBirthday($company_holidays_data);
-                
+                //TODO: No two cake days in a row.
                 $get_cakedays = $this->getCakeDays($skip_birthdays);
                 
-                return print_r($get_cakedays, true);
+                $csv = $this->createCSV($get_cakedays);
+                
+                return $csv;
             }
             else {
                 throw new \Exception("An unknown error occurred.");
@@ -250,6 +252,37 @@
                 $t1 = strtotime($a['date']);
                 $t2 = strtotime($b['date']);
                 return $t1 - $t2;
+        }
+        
+        public function createCSV($data)
+        {
+            $date = (new Carbon())->format('d-m-Y');
+            
+            $headers = [
+                'Date',
+                'Number of Small Cakes',
+                'Number of Large Cakes',
+                'Names of People'
+            ];
+    
+            $filename = "cakedays-".$date.".csv";
+            
+            try {
+                $file = fopen($filename, 'w');
+    
+                fputcsv($file, $headers);
+    
+                foreach($data as $datum) {
+                    fputcsv($file, $datum);
+                }
+    
+                fclose($file);
+            }
+            catch(\Exception $e) {
+                throw new \Exception("CSV could not be created. Please check your input and try again");
+            }
+
+            return "CSV File successfully created and stored in: " . realpath($filename);
         }
         
         /**
