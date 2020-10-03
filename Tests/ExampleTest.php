@@ -6,6 +6,7 @@
     {
         public function test_phpunit_works()
         {
+            //Ensure that PHPUnit is functioning properly
             $this->assertTrue(true);
         }
     }

@@ -18,7 +18,14 @@
         {
             parent::__construct();
         }
-        
+    
+        /**
+         * Generate basic output with title and send the provided argument (filepath) to be parsed into output data
+         *
+         * @param InputInterface $input
+         * @param OutputInterface $output
+         * @throws \Exception
+         */
         protected function getBirthdayCakes(InputInterface $input, OutputInterface $output)
         {
         
@@ -36,7 +43,8 @@
             
         }
         
-        private function getData(String $filepath) {
+        private function getData(String $filepath)
+        {
             
             if($this->validateFile($filepath)){
                 return file($filepath);
@@ -46,8 +54,17 @@
             }
             
         }
-        
-        public function validateFile($filepath) {
+    
+        /**
+         * Validate that the filepath provided points to an existing file, of type 'file', and matches the enum of
+         * file extensions accepted. Else throw an exception (caught by CakeCommand::execute()).
+         *
+         * @param $filepath
+         * @return bool
+         * @throws \Exception
+         */
+        public function validateFile($filepath)
+        {
             
             if(!file_exists($filepath)) {
                 throw new \Exception("File '{$filepath}' not found, please try again.");

@@ -7,6 +7,9 @@
 
     class CakeCommand extends Command
     {
+        /**
+         * Set up application details
+         */
         public function configure()
         {
             $this->setName('cake-days')
@@ -16,7 +19,14 @@
                 into the folder')
                 ->addArgument('filepath', InputArgument::REQUIRED, 'The path to the txt file.');
         }
-        
+    
+        /**
+         * Execute the application and catch any exceptions thrown into the output, to be displayed to the user
+         *
+         * @param InputInterface $input
+         * @param OutputInterface $output
+         * @return int
+         */
         public function execute(InputInterface $input, OutputInterface $output)
         {
             try {

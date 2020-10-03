@@ -75,6 +75,7 @@
         
         protected function tearDown():void
         {
+            //Unset the sample testing data
             unset($this->file);
         }
     }
