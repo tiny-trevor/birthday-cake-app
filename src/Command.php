@@ -2,7 +2,6 @@
     namespace Console;
 
     use Carbon\Carbon;
-    use DateTime;
     use Symfony\Component\Console\Command\Command as SymfonyCommand;
     use Symfony\Component\Console\Input\InputInterface;
     use Symfony\Component\Console\Output\OutputInterface;
@@ -86,7 +85,12 @@
                 //Separate line & trim into Name=>Date
                 list($name, $date_raw) = array_map('trim', explode(",", $file_line));
                 
-                $birthday = new Carbon($date_raw);
+                try {
+                    $birthday = new Carbon($date_raw);
+                }
+                catch(\Exception $e) {
+                    throw new \Exception("Invalid Date Format for {$date_raw}");
+                }
                 
                 //Get current year
                 $current_year = Carbon::now()->format("Y");

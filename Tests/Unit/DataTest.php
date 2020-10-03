@@ -31,6 +31,32 @@
             $class->extractData($root->url().'/invaliddata.txt');
         
         }
+    
+        public function test_data_must_have_correct_date_format()
+        {
+            //Given a new instance of the application base class
+            $class = new CakeCommand();
+        
+            //With a file containing invalid data
+            $invalid_data_file = [
+                'invaliddata.txt' =>
+                    'Julien, 1993-10-50
+                    Flossie, 1995-10-20
+                    Steve, 1992-10-14
+                    Pete, 1964-07-22
+                    Naomi, 1994-10-10'
+            ];
+        
+            //And Given a virtual root directory to hold the file
+            $root = vfsStream::setup('root', null, $invalid_data_file);
+        
+            //Verify that an exception is called
+            $this->expectException(Exception::class);
+        
+            //When provided with a non-existent file
+            $class->extractData($root->url().'/invaliddata.txt');
+        
+        }
         
         public function test_a_cake_day_will_never_fall_on_a_company_holiday()
         {
