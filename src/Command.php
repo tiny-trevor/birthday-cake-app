@@ -50,7 +50,10 @@
             
             if($this->validateFile($filepath)){
                 $data = $this->extractData($filepath);
-                return $this->mapCompanyHolidays($data);
+                $company_holidays_data = $this->mapCompanyHolidays($data);
+                $skip_birthdays = $this->skipBirthday($company_holidays_data);
+                
+                return $skip_birthdays;
             }
             else {
                 throw new \Exception("An unknown error occurred.");
@@ -89,6 +92,34 @@
         }
     
         /**
+         * Get the company holidays in an array of mm-dd, from the specified file
+         * Throw an exception if the file does not exist
+         *
+         * @return array
+         * @throws \Exception
+         */
+        public function getCompanyHolidays()
+        {
+            $holidays_file = __DIR__ . '/companyholidays.json';
+        
+            //TODO: (OPTIONAL) automatically make file?
+            if(!file_exists($holidays_file)) {
+                throw new \Exception("File '{$holidays_file}' not found. Please ensure it exists and try again");
+            }
+        
+            $holidays_json = file_get_contents($holidays_file);
+            $holidays_array = json_decode($holidays_json);
+        
+            $company_holidays = [];
+        
+            foreach ($holidays_array as $holiday) {
+                array_push($company_holidays, $holiday->date);
+            }
+        
+            return $company_holidays;
+        }
+    
+        /**
          * Map the given Birthday Data against the Company Holidays
          * If a Birthday falls on a Company Holiday, add a day, until it no longer does.
          *
@@ -111,7 +142,7 @@
                     $full_date->addDay();
                 }
                 
-                $holidays_mapped[$name] = $full_date->format('m-d');
+                $holidays_mapped[$name] = $full_date;
             }
             
             return $holidays_mapped;
@@ -119,31 +150,36 @@
         }
     
         /**
-         * Get the company holidays in an array of mm-dd, from the specified file
-         * Throw an exception if the file does not exist
+         * All employees get their birthday off
+         * Add a day to the date
+         * NOTE: Do this AFTER mapping the company holidays to account for birthdays on company holidays, so that:
+         * If the office is closed on an employee’s birthday, they get the next working day off.
+         * Also check against the company holidays to ensure they are skipped
          *
-         * @return array
+         * @param $data
+         * @return mixed
          * @throws \Exception
          */
-        public function getCompanyHolidays()
+        public function skipBirthday($data)
         {
-            $holidays_file = __DIR__ . '/companyholidays.json';
+            foreach($data as $name => $raw_date) {
             
-            //TODO: (OPTIONAL) automatically make file?
-            if(!file_exists($holidays_file)) {
-                throw new \Exception("File '{$holidays_file}' not found. Please ensure it exists and try again");
-            }
-            
-            $holidays_json = file_get_contents($holidays_file);
-            $holidays_array = json_decode($holidays_json);
-
-            $company_holidays = [];
-
-            foreach ($holidays_array as $holiday) {
-                array_push($company_holidays, $holiday->date);
-            }
+                $full_date = new Carbon($raw_date);
+                $full_date->addDay();
     
-            return $company_holidays;
+                //Get an array of company holidays
+                $company_holidays = $this->getCompanyHolidays();
+    
+                while(in_array($full_date->format('m-d'), $company_holidays)) {
+                    $full_date->addDay();
+                }
+            
+                $birthday_skipped[$name] = $full_date;
+            
+            }
+        
+            return $birthday_skipped;
+        
         }
     
         /**

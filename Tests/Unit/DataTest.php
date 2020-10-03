@@ -73,4 +73,33 @@
 
             
         }
+        
+        public function test_someones_cake_day_will_never_fall_on_their_birthday()
+        {
+            //Given a new instance of the application base class
+            $class = new CakeCommand();
+    
+            //With a filesystem containing a birthday and a company holidays file
+            $data_files = [
+                'folder' =>
+                [
+                    'birthdays.txt' =>
+                        'Naomi, 1994-10-10',
+                ]
+            ];
+            
+            //And Given a virtual root directory to hold the files
+            $root = vfsStream::setup('root', null, $data_files);
+            
+            //When Getting the Data from the birthdays file
+            $data = $class->extractData($root->url().'/folder/birthdays.txt');
+            
+            //And mapping it against the company holidays file
+            $holidays_map = $class->skipBirthday($data);
+            
+            //No company holiday should appear on the resulting list
+            $this->assertNotContains('10-10', $holidays_map);
+
+            
+        }
     }
