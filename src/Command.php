@@ -84,7 +84,15 @@
                 //Separate line & trim into Name=>Date
                 list($name, $date_raw) = array_map('trim', explode(",", $file_line));
                 
-                $data[$name]= $date_raw;
+                $birthday = new Carbon($date_raw);
+                
+                //Get current year
+                $current_year = Carbon::now()->format("Y");
+                
+                //Set birthday date to current year
+                $birthday->setYear(intval($current_year));
+                
+                $data[$name]= $birthday;
             }
         
             return $data;
@@ -134,9 +142,7 @@
             
             $holidays_mapped = [];
               
-            foreach($data as $name => $raw_date) {
-                
-                $full_date = new Carbon($raw_date);
+            foreach($data as $name => $full_date) {
                 
                 while(in_array($full_date->format('m-d'), $company_holidays)) {
                     $full_date->addDay();
@@ -162,17 +168,14 @@
          */
         public function skipBirthday($data)
         {
-            foreach($data as $name => $raw_date) {
-            
-                $full_date = new Carbon($raw_date);
-                $full_date->addDay();
-    
+            foreach($data as $name => $full_date) {
+                
                 //Get an array of company holidays
                 $company_holidays = $this->getCompanyHolidays();
-    
-                while(in_array($full_date->format('m-d'), $company_holidays)) {
+                
+                do {
                     $full_date->addDay();
-                }
+                } while(in_array($full_date->format('m-d'), $company_holidays));
             
                 $birthday_skipped[$name] = $full_date;
             
