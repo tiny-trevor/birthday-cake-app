@@ -47,7 +47,7 @@
         {
             
             if($this->validateFile($filepath)){
-                return file($filepath);
+                return print_r($this->extractData($filepath), true);
             }
             else {
                 throw new \Exception("An unknown error occurred.");
@@ -55,9 +55,33 @@
             
         }
     
+        public function extractData($filepath)
+        {
+            $file_array = file($filepath);
+        
+            $data = [];
+        
+            foreach($file_array as $file_line) {
+            
+                if(!$this->validateData($file_line)) {
+                    throw new \Exception("Data must be in format of 'Name, yyyy-mm-dd'.");
+                }
+            
+                $line_data = explode(",", $file_line);
+            
+                $data[trim($line_data[0])]= trim($line_data[1]);
+            }
+        
+            return $data;
+        
+        }
+    
         /**
-         * Validate that the filepath provided points to an existing file, of type 'file', and matches the enum of
-         * file extensions accepted. Else throw an exception (caught by CakeCommand::execute()).
+         * Validate that the filepath provided:
+         * Points to an existing file,
+         * Is of type 'file'
+         * And matches the enum of file extensions accepted.
+         * Else throw an exception (caught by CakeCommand::execute()).
          *
          * @param $filepath
          * @return bool
@@ -83,6 +107,28 @@
             
             return true;
         }
-        
-        
+    
+        /**
+         * Validate that the passed line contains:
+         * A comma (with optional whitespace, trimmed later)
+         * A Date in the format of dddd-dd-dd
+         * And that the line ends after that
+         *
+         * @param $file_line
+         * @return bool
+         */
+        private function validateData($file_line)
+        {
+            $line_pattern = '/((,)(\s*)(\d{4})(-\d{2}){2})$/';
+    
+            if(preg_match($line_pattern, $file_line)){
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+    
+    
+    
     }

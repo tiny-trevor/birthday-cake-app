@@ -4,7 +4,8 @@
         "mikey179/vfsstream": "1.6.8"
     },
     "require": {
-        "symfony/console": "^5.1"
+        "symfony/console": "^5.1",
+        "nesbot/carbon": "^2.40"
     },
     "autoload": {
         "psr-4": {
