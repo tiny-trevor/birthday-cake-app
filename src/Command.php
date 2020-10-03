@@ -11,7 +11,7 @@
         /**
          * Enum list of accepted filetypes
          */
-        public const types = ['txt'];
+        public const types = ['txt', 'csv'];
         
         
         public function __construct()
@@ -63,10 +63,12 @@
         
             foreach($file_array as $file_line) {
             
+                //Make sure the line passes validation
                 if(!$this->validateData($file_line)) {
                     throw new \Exception("Data must be in format of 'Name, yyyy-mm-dd'.");
                 }
             
+                //Separate line into Name=>Date
                 $line_data = explode(",", $file_line);
             
                 $data[trim($line_data[0])]= trim($line_data[1]);
