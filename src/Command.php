@@ -129,7 +129,7 @@
     
         /**
          * Map the given Birthday Data against the Company Holidays
-         * If a Birthday falls on a Company Holiday, add a day, until it no longer does.
+         * If a Birthday falls on a Company Holiday or a Weekend, add a day, until it no longer does.
          *
          * @param $data
          * @return array
@@ -160,7 +160,8 @@
          * Add a day to the date
          * NOTE: Do this AFTER mapping the company holidays to account for birthdays on company holidays, so that:
          * If the office is closed on an employee’s birthday, they get the next working day off.
-         * Also check against the company holidays to ensure they are skipped
+         *
+         * Also check against the company holidays and weekends to ensure they are skipped
          *
          * @param $data
          * @return mixed
