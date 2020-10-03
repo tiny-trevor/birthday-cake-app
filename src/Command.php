@@ -53,7 +53,9 @@
                 $company_holidays_data = $this->mapCompanyHolidays($data);
                 $skip_birthdays = $this->skipBirthday($company_holidays_data);
                 
-                return $skip_birthdays;
+                $get_cakedays = $this->getCakeDays($skip_birthdays);
+                
+                return print_r($get_cakedays, true);
             }
             else {
                 throw new \Exception("An unknown error occurred.");
@@ -189,6 +191,63 @@
         
         }
     
+        /**
+         * From the data provided, iterate through each given date to find cake recipients, and create list of cake days
+         * small cakes or large cakes, as well as the names of those getting cake that day
+         *
+         * @param $data
+         * @return mixed
+         */
+        public function getCakeDays($data)
+        {
+            $dates = array_values($data);
+        
+            foreach($dates as $carbonDate) {
+                $full_date = $carbonDate->format('Y-m-d');
+            
+                $cake_days[$full_date]['date'] = $full_date;
+                $cake_days[$full_date]['sm'] = 0;
+                $cake_days[$full_date]['lg'] = 0;
+                $cake_days[$full_date]['names'] = '';
+                $cakes = 0;
+            
+                foreach($data as $name => $date)
+                {
+                    if($carbonDate == $date) {
+                        $cake_days[$full_date]['names'] = $cake_days[$full_date]['names'] == '' ? $name : $cake_days[$full_date]['names'] . ", " . $name;
+                        $cakes++;
+                    }
+                }
+            
+                if($cakes > 1) {
+                    $cake_days[$full_date]['sm'] = 0;
+                    $cake_days[$full_date]['lg'] = 1;
+                }
+                else if($cakes == 1) {
+                    $cake_days[$full_date]['sm'] = 1;
+                    $cake_days[$full_date]['lg'] = 0;
+                }
+            }
+            
+            usort($cake_days, array($this,'sort_dates'));
+        
+            return $cake_days;
+        }
+    
+        /**
+         * Sort cake days
+         *
+         * @param $a
+         * @param $b
+         * @return false|int
+         */
+        private function sort_dates($a, $b)
+        {
+                $t1 = strtotime($a['date']);
+                $t2 = strtotime($b['date']);
+                return $t1 - $t2;
+        }
+        
         /**
          * Validate that the filepath provided:
          * Points to an existing file,

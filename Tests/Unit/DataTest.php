@@ -79,7 +79,7 @@
             //Given a new instance of the application base class
             $class = new CakeCommand();
     
-            //With a filesystem containing a birthday and a company holidays file
+            //With a filesystem containing a birthday file
             $data_files = [
                 'folder' =>
                 [
@@ -100,6 +100,45 @@
             //No company holiday should appear on the resulting list
             $this->assertNotContains('10-10', $holidays_map);
 
+            
+        }
+        
+        public function test_if_two_people_share_a_cake_day_they_get_one_large_cake()
+        {
+            //Given a new instance of the application base class
+            $class = new CakeCommand();
+    
+            //With a filesystem containing a birthday file with two people sharing the same birthday
+            $data_files = [
+                'folder' =>
+                [
+                    'birthdays.txt' =>
+                        'Julien, 1993-10-31
+                        Letitia, 1993-10-31'
+                ]
+            ];
+            
+            //And Given a virtual root directory to hold the files
+            $root = vfsStream::setup('root', null, $data_files);
+            
+            //When Getting the Data from the birthdays file
+            $data = $class->extractData($root->url().'/folder/birthdays.txt');
+            
+            //And getting the relevant cake days
+            $cake_days = $class->getCakeDays($data);
+            
+            //Get result of the lg and sm cakes value of the array
+            $large_cakes = $cake_days[0]['lg'];
+            $small_cakes = $cake_days[0]['sm'];
+            
+            //The resulting array should contain a key called lg inside 0
+            $this->assertArrayHasKey('lg', $cake_days[0]);
+            
+            //The results should show 1 large cake
+            $this->assertEquals('1', $large_cakes);
+            
+            //The results should show 0 small cakes
+            $this->assertEquals('0', $small_cakes);
             
         }
     }
