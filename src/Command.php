@@ -168,10 +168,13 @@
          */
         public function skipBirthday($data)
         {
+    
+            //Get an array of company holidays
+            $company_holidays = $this->getCompanyHolidays();
+    
+            $birthday_skipped = [];
+            
             foreach($data as $name => $full_date) {
-                
-                //Get an array of company holidays
-                $company_holidays = $this->getCompanyHolidays();
                 
                 do {
                     $full_date->addDay();
