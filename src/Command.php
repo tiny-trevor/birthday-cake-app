@@ -13,7 +13,10 @@
          * Enum list of accepted filetypes
          */
         public const types = ['txt', 'csv'];
-        
+    
+        /**
+         * @var array
+         */
         public array $company_holidays;
         
     
@@ -45,25 +48,36 @@
             //Pass input filepath to function
             $filepath = $input->getArgument('filepath');
             
+            // Processing input should return the filename of the new CSV
             $filename = $this->processInput($filepath);
             $message = "CSV File successfully created and stored in: " . realpath($filename);
         
-            //Write in the data from the file
+            // Add the success message to the output
             $output->writeln($message);
             
         }
     
         private function processInput(String $filepath)
         {
-            
+            // If file passes validation
             if($this->validateFile($filepath)){
                 
+                // Return birthday list array from file
                 $data = $this->extractData($filepath);
+                
+                // Map against Company Holidays and Weekends
                 $map_workingdays = $this->mapWorkingDays($data);
+                
+                // Skip Birthdays or first working day after non-working day birthday
                 $skip_birthdays = $this->skipBirthday($map_workingdays);
+                
+                // Get next possible cake day for each person, group by date
                 $get_workingdays = $this->getNextWorkingDays($skip_birthdays);
+                
+                // Separate out to allow for cake-free days after every cake day and assign large vs small cakes
                 $get_cakedays = $this->getCakeDays($get_workingdays);
                 
+                // Compile data into CSV and return filepath
                 return $this->createCSV($get_cakedays);
                 
             }
@@ -147,6 +161,8 @@
          * Map the given Birthday Data against the Company Holidays & Weekends
          * If a Birthday falls on a Company Holiday or a Weekend, add a day, until it no longer does.
          *
+         * Add results to an array of cake day data after the next possible working day has been found.
+         *
          * @param $data
          * @return array
          * @throws \Exception
@@ -156,7 +172,8 @@
             $workingdays = [];
             
             foreach($data as $name => $date) {
-                
+    
+                // Keep adding a day while the next day falls on a company holiday or weekend
                 while(in_array($date->format('m-d'), $this->company_holidays) || $date->isWeekend()) {
                     $date->addDay();
                 }
@@ -175,6 +192,7 @@
          * If the office is closed on an employee’s birthday, they get the next working day off.
          *
          * Also check against the company holidays and weekends to ensure they are skipped
+         * Add results to an array of cake day data after the birthday or next working day thereafter has been skipped
          *
          * @param $data
          * @return mixed
@@ -187,6 +205,7 @@
             
             foreach($data as $name => $full_date) {
                 
+                // Add a day, and then repeat while the next day falls on a company holiday or weekend
                 do {
                     $full_date->addDay();
                 } while(in_array($full_date->format('m-d'), $this->company_holidays) || $full_date->isWeekend());
@@ -200,7 +219,7 @@
         }
     
         /**
-         * Sort cake days
+         * Sort dates
          *
          * @param $a
          * @param $b
@@ -214,17 +233,20 @@
         }
         
         /**
-         * TODO: Update docs
          * From the data provided, iterate through each given date to find cake recipients, and create list of cake days
-         * small cakes or large cakes, as well as the names of those getting cake that day
+         * number of cakes, as well as the names of those getting cake that day
+         *
+         * Add results to an array of cake day data where each cake day should be on the next available working day
+         * after birthdays have been skipped, grouped by the date
          *
          * @param $data
          * @return mixed
          */
         public function getNextWorkingDays($data)
         {
+            // Get list of unique dates in the cake day data
             $dates = array_unique(array_values($data));
-        
+            
             foreach($dates as $carbonDate) {
                 $full_date = $carbonDate->format('Y-m-d');
 
@@ -234,7 +256,9 @@
 
                 foreach($data as $name => $date)
                 {
+                    //Add each name element of $data into the array, grouping together those with matching cake days
                     if($carbonDate == $date) {
+                        // If names string is empty, add the name, else include a comma beforehand for legibility
                         $working_days[$full_date]['names'] = $working_days[$full_date]['names'] == '' ? $name : $working_days[$full_date]['names'] . ", " . $name;
                         $working_days[$full_date]['cakes']++;
                     }
@@ -250,6 +274,7 @@
          * Given an array of all cakedays, apply the health conditions:
          * No two cake days can occur after one another, instead a large cake is provided on the second day
          * The day after a cake day is a cake-free day. Any cake due on a cake-free day should be moved to the next day
+         *
          * Once satisfied, return the finalised list of cake days.
          *
          * @param $data
@@ -261,21 +286,18 @@
             
             // Get all cake days into an array
             $dates = array_column($data, 'date');
+    
+            $cake_days = [];
+            $array_num = 0;
             
             // For health reasons, the day after each cake must be cake-free.
             $cake_free_days = [];
             
-            // final multidimensional cake days array, initialised with key 0
-            $cake_days = [];
-            $array_num = 0;
-            
-            //Iterate over each cake day entry
             foreach($data as $cakeday) {
                 
-                //Get current day
                 $current_day = $cakeday['date'];
     
-                //Get next day
+                // Get next day
                 $next_day = (new Carbon($cakeday['date']))->addDay()->format('Y-m-d');
     
                 //If two or more cakes days coincide, we instead provide one large cake to share.
@@ -340,7 +362,6 @@
                 $cake_days[$array_num]['lg'] = $lg;
                 $cake_days[$array_num]['names'] = $names;
                 
-                // Increment array_num
                 $array_num++;
                 
             }
@@ -364,6 +385,7 @@
         {
             $date = (new Carbon())->format('d-m-Y');
             
+            // Headers for the CSV
             $headers = [
                 'Date',
                 'Number of Small Cakes',
@@ -434,6 +456,7 @@
          */
         private function validatePattern($file_line)
         {
+            // Line must contain a comma, followed by one or more spaces, followed by a date in format yyyy-mm-dd
             $line_pattern = '/((,)(\s*)(\d{4})(-\d{2}){2})$/';
     
             if(preg_match($line_pattern, $file_line)){
