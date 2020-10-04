@@ -151,13 +151,15 @@
             $data = $class->extractData($root->url().'/folder/birthdays.txt');
             
             //And getting the relevant cake days
-            $cake_days = $class->getCakeDays($data);
+            $next_working_days = $class->getNextWorkingDays($data);
+            $cake_days = $class->getCakeDays($next_working_days);
             
             //Get result of the lg and sm cakes value of the array
             $large_cakes = $cake_days[0]['lg'];
             $small_cakes = $cake_days[0]['sm'];
             
-            //The resulting array should contain a key called lg inside 0
+            //The resulting array should contain keys called lg and sm inside 0
+            $this->assertArrayHasKey('sm', $cake_days[0]);
             $this->assertArrayHasKey('lg', $cake_days[0]);
             
             //The results should show 1 large cake
@@ -166,5 +168,37 @@
             //The results should show 0 small cakes
             $this->assertEquals('0', $small_cakes);
             
+        }
+        
+        public function test_no_cake_day_can_fall_on_a_cake_free_day()
+        {
+            //Given a new instance of the application base class
+            $class = new CakeCommand();
+    
+            //With a filesystem containing a birthday file with three people with consecutive birthdays
+            $data_files = [
+                'folder' =>
+                    [
+                        'birthdays.txt' =>
+                            'Alex, 1976-07-20
+                            Jen, 2000-07-21
+                            Pete, 1964-07-22'
+                    ]
+            ];
+    
+            //And Given a virtual root directory to hold the files
+            $root = vfsStream::setup('root', null, $data_files);
+    
+            //When Getting the Data from the birthdays file
+            $data = $class->extractData($root->url().'/folder/birthdays.txt');
+    
+            //And getting the relevant cake days
+            $next_working_days = $class->getNextWorkingDays($data);
+            $cake_days = $class->getCakeDays($next_working_days);
+    
+            $dates = array_column($cake_days, 'date');
+    
+            //The results should not include the cake-free day of 07-23
+            $this->assertNotContains('07-23', $dates);
         }
     }
