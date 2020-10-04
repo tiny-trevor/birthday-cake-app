@@ -43,15 +43,14 @@
             ]);
             
             //Pass input filepath to function
-            $fileContents = $this->getData($input->getArgument('filepath'));
+            $fileContents = $this->processInput($input->getArgument('filepath'));
             
             //Write in the data from the file
             $output->writeln($fileContents);
             
         }
     
-        //TODO: Rename function after proper purpose
-        private function getData(String $filepath)
+        private function processInput(String $filepath)
         {
             
             if($this->validateFile($filepath)){
