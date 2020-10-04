@@ -62,7 +62,7 @@
                 //Shortened titles for console width
                 $table->setHeaders(['Date', 'Small Cakes', 'Large Cakes', 'Names']);
                 
-                //Display all rows
+                //Get all rows, remove titles, add in one by one
                 $file_data = file($filename);
                 array_shift($file_data);
                 foreach($file_data as $file_line) {
@@ -76,10 +76,13 @@
                 $output->writeln($message);
             }
             
-        
-            
         }
-        
+    
+        /**
+         * Get ASCII for success cake
+         *
+         * @return string
+         */
         private function getCakeASCII() {
             return '█▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
 █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░█
@@ -101,8 +104,17 @@
 █░░░░░░░░░▀▀▀▀▀▀░░░░░░░░░░░░░░░░░░░░░█
 █▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█';
         }
-        
     
+        /**
+         * Take input filepath and pass it through validation and mapping in order to get a list of cakedays,
+         * grouped by date
+         * Taking into account birthdays off, company holidays and weekends, and the health measure of having a
+         * cake-free day after every cake day.
+         *
+         * @param String $filepath
+         * @return string
+         * @throws \Exception
+         */
         private function processInput(String $filepath)
         {
             // If file passes validation
