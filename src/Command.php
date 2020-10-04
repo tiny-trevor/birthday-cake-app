@@ -152,15 +152,12 @@
          */
         public function mapCompanyHolidays($data)
         {
-            //Get an array of company holidays
-            $company_holidays = $this->getCompanyHolidays();
-            
             $holidays_mapped = [];
             
             //TODO: Rename to birthday
             foreach($data as $name => $full_date) {
                 
-                while(in_array($full_date->format('m-d'), $company_holidays) || $full_date->isWeekend()) {
+                while(in_array($full_date->format('m-d'), $this->company_holidays) || $full_date->isWeekend()) {
                     $full_date->addDay();
                 }
                 
@@ -186,16 +183,13 @@
         public function skipBirthday($data)
         {
     
-            //Get an array of company holidays
-            $company_holidays = $this->getCompanyHolidays();
-    
             $birthday_skipped = [];
             
             foreach($data as $name => $full_date) {
                 
                 do {
                     $full_date->addDay();
-                } while(in_array($full_date->format('m-d'), $company_holidays) || $full_date->isWeekend());
+                } while(in_array($full_date->format('m-d'), $this->company_holidays) || $full_date->isWeekend());
             
                 $birthday_skipped[$name] = $full_date;
             
