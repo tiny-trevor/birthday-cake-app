@@ -15,7 +15,7 @@
         public const types = ['txt', 'csv'];
         
         public array $company_holidays;
-    
+        
     
         public function __construct()
         {
@@ -43,10 +43,13 @@
             ]);
             
             //Pass input filepath to function
-            $fileContents = $this->processInput($input->getArgument('filepath'));
+            $filepath = $input->getArgument('filepath');
             
+            $filename = $this->processInput($filepath);
+            $message = "CSV File successfully created and stored in: " . realpath($filename);
+        
             //Write in the data from the file
-            $output->writeln($fileContents);
+            $output->writeln($message);
             
         }
     
@@ -54,15 +57,15 @@
         {
             
             if($this->validateFile($filepath)){
-                $data = $this->extractData($filepath);
-                $company_holidays_data = $this->mapCompanyHolidays($data);
-                $skip_birthdays = $this->skipBirthday($company_holidays_data);
-                $next_working_days = $this->getNextWorkingDays($skip_birthdays);
-                $get_cakedays = $this->getCakeDays($next_working_days);
-
-                $csv = $this->createCSV($get_cakedays);
                 
-                return $csv;
+                $data = $this->extractData($filepath);
+                $map_workingdays = $this->mapWorkingDays($data);
+                $skip_birthdays = $this->skipBirthday($map_workingdays);
+                $get_workingdays = $this->getNextWorkingDays($skip_birthdays);
+                $get_cakedays = $this->getCakeDays($get_workingdays);
+                
+                return $this->createCSV($get_cakedays);
+                
             }
             else {
                 throw new \Exception("An unknown error occurred.");
@@ -86,7 +89,7 @@
             foreach($file_array as $file_line) {
             
                 //Make sure the line passes validation
-                if(!$this->validateData($file_line)) {
+                if(!$this->validatePattern($file_line)) {
                     throw new \Exception("Data must be in format of 'Name, yyyy-mm-dd'. ({$file_line})");
                 }
             
@@ -124,7 +127,6 @@
         {
             $holidays_file = __DIR__ . '/companyholidays.json';
         
-            //TODO: (OPTIONAL) automatically make file?
             if(!file_exists($holidays_file)) {
                 throw new \Exception("File '{$holidays_file}' not found. Please ensure it exists and try again");
             }
@@ -142,28 +144,27 @@
         }
     
         /**
-         * Map the given Birthday Data against the Company Holidays
+         * Map the given Birthday Data against the Company Holidays & Weekends
          * If a Birthday falls on a Company Holiday or a Weekend, add a day, until it no longer does.
          *
          * @param $data
          * @return array
          * @throws \Exception
          */
-        public function mapCompanyHolidays($data)
+        public function mapWorkingDays($data)
         {
-            $holidays_mapped = [];
+            $workingdays = [];
             
-            //TODO: Rename to birthday
-            foreach($data as $name => $full_date) {
+            foreach($data as $name => $date) {
                 
-                while(in_array($full_date->format('m-d'), $this->company_holidays) || $full_date->isWeekend()) {
-                    $full_date->addDay();
+                while(in_array($date->format('m-d'), $this->company_holidays) || $date->isWeekend()) {
+                    $date->addDay();
                 }
-                
-                $holidays_mapped[$name] = $full_date;
+    
+                $workingdays[$name] = $date;
             }
             
-            return $holidays_mapped;
+            return $workingdays;
     
         }
     
@@ -197,6 +198,20 @@
             return $birthday_skipped;
         
         }
+    
+        /**
+         * Sort cake days
+         *
+         * @param $a
+         * @param $b
+         * @return false|int
+         */
+        private function sortDates($a, $b)
+        {
+            $t1 = strtotime($a['date']);
+            $t2 = strtotime($b['date']);
+            return $t1 - $t2;
+        }
         
         /**
          * TODO: Update docs
@@ -208,16 +223,15 @@
          */
         public function getNextWorkingDays($data)
         {
-            $dates = array_values($data);
+            $dates = array_unique(array_values($data));
         
-            //TODO: Remove Duplicates
             foreach($dates as $carbonDate) {
                 $full_date = $carbonDate->format('Y-m-d');
-            
+
                 $working_days[$full_date]['date'] = $full_date;
                 $working_days[$full_date]['cakes'] = 0;
                 $working_days[$full_date]['names'] = '';
-            
+
                 foreach($data as $name => $date)
                 {
                     if($carbonDate == $date) {
@@ -227,23 +241,9 @@
                 }
             }
             
-            usort($working_days, array($this,'sort_dates'));
+            usort($working_days, array($this,'sortDates'));
         
             return $working_days;
-        }
-    
-        /**
-         * Sort cake days
-         *
-         * @param $a
-         * @param $b
-         * @return false|int
-         */
-        private function sort_dates($a, $b)
-        {
-                $t1 = strtotime($a['date']);
-                $t2 = strtotime($b['date']);
-                return $t1 - $t2;
         }
     
         /**
@@ -295,17 +295,12 @@
                 // Any cakes due on a cakefree day are postponed to the next working day.
                 if(in_array($next_day, $dates) && !in_array($next_day, $cake_free_days)) {
     
-                    // Set next day date as date variable
-                    $date = $next_day;
-                    
-                    // Provide one large cake on the second day, and set the small cakes to 0
-                    $lg = 1;
-                    $sm = 0;
-                    
                     // Find data object for the next day
                     $next_cakeday = array_search($next_day, array_column($data, 'date'));
     
-                    // Set current cakeday names as well as names for next cakeday as names variable
+                    $date = $next_day;
+                    $lg = 1;
+                    $sm = 0;
                     $names = $cakeday['names'] . ', '.$data[$next_cakeday]['names'];
     
                     // For health reasons, the day after each cake must be cake-free.
@@ -321,10 +316,7 @@
                         $skip_day->addDay();
                     } while(in_array($skip_day->format('m-d'), $this->company_holidays) || $skip_day->isWeekend());
                     
-                    // Set next day date as date variable
                     $date = $skip_day->format('Y-m-d');
-    
-                    // Set names for cakeday as names variable
                     $names = $cakeday['names'];
     
                     // For health reasons, the day after each cake must be cake-free.
@@ -332,16 +324,13 @@
                     
                 }
                 else {
-                    // If the current cakeday date has already been processed by the previous two-day clause, skip
+                    // If the current cakeday date has already been processed, skip
                     if(array_search($cakeday['date'], array_column($cake_days, 'date')))
                     {
                         continue;
                     }
     
-                    // Set cakeday date as date variable
                     $date = $cakeday['date'];
-                    
-                    // Set names for cakeday as names variable
                     $names = $cakeday['names'];
                 }
     
@@ -355,6 +344,8 @@
                 $array_num++;
                 
             }
+    
+            usort($cake_days, array($this,'sortDates'));
             
             return $cake_days;
         }
@@ -394,12 +385,11 @@
                 fclose($file);
             }
             catch(\Exception $e) {
-                throw new \Exception("CSV could not be created. Please check your input and try again");
+                throw new \Exception("CSV could not be created. Reason:\n{$e}");
             }
 
-            return "CSV File successfully created and stored in: " . realpath($filename);
+            return $filename;
         }
-        
         
         /**
          * Validate that the filepath provided:
@@ -439,12 +429,10 @@
          * A Date in the format of dddd-dd-dd
          * And that the line ends after that
          *
-         * TODO: Rename function after proper purpose
-         *
          * @param $file_line
          * @return bool
          */
-        private function validateData($file_line)
+        private function validatePattern($file_line)
         {
             $line_pattern = '/((,)(\s*)(\d{4})(-\d{2}){2})$/';
     
@@ -455,7 +443,5 @@
                 return false;
             }
         }
-    
-    
     
     }

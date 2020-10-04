@@ -92,7 +92,7 @@
             $data = $class->extractData($root->url().'/folder/birthdays.txt');
             
             //And mapping it against the company holidays file
-            $holidays_map = $class->mapCompanyHolidays($data);
+            $holidays_map = $class->mapWorkingDays($data);
             
             //No company holiday should appear on the resulting list
             $this->assertNotContains('12-25', $holidays_map);
