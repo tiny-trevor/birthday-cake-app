@@ -448,7 +448,7 @@
                 'Date',
                 'Number of Small Cakes',
                 'Number of Large Cakes',
-                'Names of People'
+                'Names of People getting cake'
             ];
     
             $filename = "cakedays-".$date.".csv";
