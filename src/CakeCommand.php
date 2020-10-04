@@ -33,7 +33,7 @@
                 $this->getBirthdayCakes($input, $output);
             }
             catch(\Exception $e) {
-                $output->writeln("Error: " .$e->getMessage());
+                $output->writeln("<error>Error: </error>" .$e->getMessage());
             }
     
             return 0;

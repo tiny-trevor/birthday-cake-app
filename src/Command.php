@@ -3,6 +3,7 @@
 
     use Carbon\Carbon;
     use Symfony\Component\Console\Command\Command as SymfonyCommand;
+    use Symfony\Component\Console\Helper\Table;
     use Symfony\Component\Console\Input\InputInterface;
     use Symfony\Component\Console\Output\OutputInterface;
 
@@ -49,13 +50,58 @@
             $filepath = $input->getArgument('filepath');
             
             // Processing input should return the filename of the new CSV
-            $filename = $this->processInput($filepath);
-            $message = "CSV File successfully created and stored in: " . realpath($filename);
+            if($filename = $this->processInput($filepath)) {
+                $message = "\nCSV File successfully created and stored in: \n => " . realpath($filename) . "\n";
+    
+                // Successful response
+                $output->writeln($this->getCakeASCII());
+                
+                //Display data in table in output
+                $table = new Table($output);
+                
+                //Shortened titles for console width
+                $table->setHeaders(['Date', 'Small Cakes', 'Large Cakes', 'Names']);
+                
+                //Display all rows
+                $file_data = file($filename);
+                array_shift($file_data);
+                foreach($file_data as $file_line) {
+                    $row = str_getcsv($file_line, ",", '"');
+                    $table->addRow($row);
+                }
+                
+                $table->render();
+    
+                // Add the success message to the output
+                $output->writeln($message);
+            }
+            
         
-            // Add the success message to the output
-            $output->writeln($message);
             
         }
+        
+        private function getCakeASCII() {
+            return '█▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
+█░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░█
+█░░░░░░░░░░░░░░▄░░░░░░░░░░░░░░░░░░░░░█
+█░░░░░░░░░░░░░░░█░░░░░░░░░░░░░░░░░░░░█
+█░░░░░░░░░░░▄▄░▄▀░░░░░░░░░░░░░░░░░░░░█
+█░░░░░░░░▄██████▄░░░░░▄▄▄▄▄▄███▀█░░░░█
+█░░░░░░▄█░███████░██▀▀▀░▄▄█▀█▄███░░░░█
+█░░░░█▀▀▀░█████▀▀▄█▀▄▄▀▀▄▄███████░░░░█
+█░░░░█▀▄▄▄▄███░▄▄█▀▀▄▄███████▀▀▄▄░░░░█
+█░░░░█░░░░▀▀▀▀▀▀▄▄███████▀▀▄▄████░░░░█
+█░░░░█░░░░░░░░░█████▀▀▀▄▄███████▀░░░░█
+█░░░░█░░░░░░░░░█▀▀░▄▄███████▀█▄▄█░░░░█
+█░░░░█░░░░░░░░░▄▄███████▀█▄██████░░░░█
+█░░░░█░░░░░░░░░████▀▀▄▄███████▀▀░░░░░█
+█░░░░█░░░░░░░░░▀▀▄▄███████▀▀░░░░░░░░░█
+█░░░░█░░░░░░░░░███████▀▀░░░░░░░░░░░░░█
+█░░░░░▀▄▄▄░░░░░███▀▀░░░░░░░░░░░░░░░░░█
+█░░░░░░░░░▀▀▀▀▀▀░░░░░░░░░░░░░░░░░░░░░█
+█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█';
+        }
+        
     
         private function processInput(String $filepath)
         {
