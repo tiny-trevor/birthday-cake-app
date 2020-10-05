@@ -154,19 +154,14 @@
             $next_working_days = $class->getNextWorkingDays($data);
             $cake_days = $class->getCakeDays($next_working_days);
             
-            //Get result of the lg and sm cakes value of the array
-            $large_cakes = $cake_days[0]['lg'];
-            $small_cakes = $cake_days[0]['sm'];
+            //Get result of the cakes value of the array
+            $cakes = $cake_days[0]['cakes'];
             
             //The resulting array should contain keys called lg and sm inside 0
-            $this->assertArrayHasKey('sm', $cake_days[0]);
-            $this->assertArrayHasKey('lg', $cake_days[0]);
+            $this->assertArrayHasKey('cakes', $cake_days[0]);
             
             //The results should show 1 large cake
-            $this->assertEquals('1', $large_cakes);
-            
-            //The results should show 0 small cakes
-            $this->assertEquals('0', $small_cakes);
+            $this->assertGreaterThan('1', $cakes);
             
         }
         

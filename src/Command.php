@@ -79,33 +79,6 @@
         }
     
         /**
-         * Get ASCII for success cake
-         *
-         * @return string
-         */
-        private function getCakeASCII() {
-            return '█▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
-█░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░█
-█░░░░░░░░░░░░░░▄░░░░░░░░░░░░░░░░░░░░░█
-█░░░░░░░░░░░░░░░█░░░░░░░░░░░░░░░░░░░░█
-█░░░░░░░░░░░▄▄░▄▀░░░░░░░░░░░░░░░░░░░░█
-█░░░░░░░░▄██████▄░░░░░▄▄▄▄▄▄███▀█░░░░█
-█░░░░░░▄█░███████░██▀▀▀░▄▄█▀█▄███░░░░█
-█░░░░█▀▀▀░█████▀▀▄█▀▄▄▀▀▄▄███████░░░░█
-█░░░░█▀▄▄▄▄███░▄▄█▀▀▄▄███████▀▀▄▄░░░░█
-█░░░░█░░░░▀▀▀▀▀▀▄▄███████▀▀▄▄████░░░░█
-█░░░░█░░░░░░░░░█████▀▀▀▄▄███████▀░░░░█
-█░░░░█░░░░░░░░░█▀▀░▄▄███████▀█▄▄█░░░░█
-█░░░░█░░░░░░░░░▄▄███████▀█▄██████░░░░█
-█░░░░█░░░░░░░░░████▀▀▄▄███████▀▀░░░░░█
-█░░░░█░░░░░░░░░▀▀▄▄███████▀▀░░░░░░░░░█
-█░░░░█░░░░░░░░░███████▀▀░░░░░░░░░░░░░█
-█░░░░░▀▄▄▄░░░░░███▀▀░░░░░░░░░░░░░░░░░█
-█░░░░░░░░░▀▀▀▀▀▀░░░░░░░░░░░░░░░░░░░░░█
-█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█';
-        }
-    
-        /**
          * Take input filepath and pass it through validation and mapping in order to get a list of cakedays,
          * grouped by date
          * Taking into account birthdays off, company holidays and weekends, and the health measure of having a
@@ -145,6 +118,60 @@
             
         }
     
+        /**
+         * Validate that the filepath provided:
+         * Points to an existing file,
+         * Is of type 'file'
+         * And matches the enum of file extensions accepted.
+         * Else throw an exception (caught by CakeCommand::execute()).
+         *
+         * @param $filepath
+         * @return bool
+         * @throws \Exception
+         */
+        public function validateFile($filepath)
+        {
+        
+            if(!file_exists($filepath)) {
+                throw new \Exception("File '{$filepath}' not found, please try again.");
+            }
+        
+            if(!is_file($filepath)) {
+                $filetype = filetype($filepath);
+                throw new \Exception("Please provide a file. '{$filepath}' is a {$filetype}");
+            }
+        
+            $file_ext = pathinfo($filepath, PATHINFO_EXTENSION);
+            if(!in_array($file_ext, self::types)) {
+                $file_types = implode(', ',self::types);
+                throw new \Exception("File given is of type '{$file_ext}', only files of types '{$file_types}' are allowed");
+            }
+        
+            return true;
+        }
+    
+        /**
+         * Validate that the passed line contains:
+         * A comma (with optional whitespace, trimmed later)
+         * A Date in the format of dddd-dd-dd
+         * And that the line ends after that
+         *
+         * @param $file_line
+         * @return bool
+         */
+        private function validatePattern($file_line)
+        {
+            // Line must contain a comma, followed by one or more spaces, followed by a date in format yyyy-mm-dd
+            $line_pattern = '/((,)(\s*)(\d{4})(-\d{2}){2})$/';
+        
+            if(preg_match($line_pattern, $file_line)){
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        
         /**
          * Extract Data from given File and return as array
          *
@@ -275,20 +302,6 @@
             return $birthday_skipped;
         
         }
-    
-        /**
-         * Sort dates
-         *
-         * @param $a
-         * @param $b
-         * @return false|int
-         */
-        private function sortDates($a, $b)
-        {
-            $t1 = strtotime($a['date']);
-            $t2 = strtotime($b['date']);
-            return $t1 - $t2;
-        }
         
         /**
          * From the data provided, iterate through each given date to find cake recipients, and create list of cake days
@@ -418,6 +431,20 @@
             usort($cake_days, array($this,'sortDates'));
             return $cake_days;
         }
+    
+        /**
+         * Sort dates
+         *
+         * @param $a
+         * @param $b
+         * @return false|int
+         */
+        private function sortDates($a, $b)
+        {
+            $t1 = strtotime($a['date']);
+            $t2 = strtotime($b['date']);
+            return $t1 - $t2;
+        }
         
         /**
          * Create CSV file in current main directory (/birthday-cake) out of cake day data
@@ -475,59 +502,32 @@
 
             return $filename;
         }
-        
-        /**
-         * Validate that the filepath provided:
-         * Points to an existing file,
-         * Is of type 'file'
-         * And matches the enum of file extensions accepted.
-         * Else throw an exception (caught by CakeCommand::execute()).
-         *
-         * @param $filepath
-         * @return bool
-         * @throws \Exception
-         */
-        public function validateFile($filepath)
-        {
-            
-            if(!file_exists($filepath)) {
-                throw new \Exception("File '{$filepath}' not found, please try again.");
-            }
-            
-            if(!is_file($filepath)) {
-                $filetype = filetype($filepath);
-                throw new \Exception("Please provide a file. '{$filepath}' is a {$filetype}");
-            }
-            
-            $file_ext = pathinfo($filepath, PATHINFO_EXTENSION);
-            if(!in_array($file_ext, self::types)) {
-                $file_types = implode(', ',self::types);
-                throw new \Exception("File given is of type '{$file_ext}', only files of types '{$file_types}' are allowed");
-            }
-            
-            return true;
-        }
     
         /**
-         * Validate that the passed line contains:
-         * A comma (with optional whitespace, trimmed later)
-         * A Date in the format of dddd-dd-dd
-         * And that the line ends after that
+         * Get ASCII for success cake
          *
-         * @param $file_line
-         * @return bool
+         * @return string
          */
-        private function validatePattern($file_line)
-        {
-            // Line must contain a comma, followed by one or more spaces, followed by a date in format yyyy-mm-dd
-            $line_pattern = '/((,)(\s*)(\d{4})(-\d{2}){2})$/';
-    
-            if(preg_match($line_pattern, $file_line)){
-                return true;
-            }
-            else {
-                return false;
-            }
+        private function getCakeASCII() {
+            return '█▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀█
+█░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░█
+█░░░░░░░░░░░░░░▄░░░░░░░░░░░░░░░░░░░░░█
+█░░░░░░░░░░░░░░░█░░░░░░░░░░░░░░░░░░░░█
+█░░░░░░░░░░░▄▄░▄▀░░░░░░░░░░░░░░░░░░░░█
+█░░░░░░░░▄██████▄░░░░░▄▄▄▄▄▄███▀█░░░░█
+█░░░░░░▄█░███████░██▀▀▀░▄▄█▀█▄███░░░░█
+█░░░░█▀▀▀░█████▀▀▄█▀▄▄▀▀▄▄███████░░░░█
+█░░░░█▀▄▄▄▄███░▄▄█▀▀▄▄███████▀▀▄▄░░░░█
+█░░░░█░░░░▀▀▀▀▀▀▄▄███████▀▀▄▄████░░░░█
+█░░░░█░░░░░░░░░█████▀▀▀▄▄███████▀░░░░█
+█░░░░█░░░░░░░░░█▀▀░▄▄███████▀█▄▄█░░░░█
+█░░░░█░░░░░░░░░▄▄███████▀█▄██████░░░░█
+█░░░░█░░░░░░░░░████▀▀▄▄███████▀▀░░░░░█
+█░░░░█░░░░░░░░░▀▀▄▄███████▀▀░░░░░░░░░█
+█░░░░█░░░░░░░░░███████▀▀░░░░░░░░░░░░░█
+█░░░░░▀▄▄▄░░░░░███▀▀░░░░░░░░░░░░░░░░░█
+█░░░░░░░░░▀▀▀▀▀▀░░░░░░░░░░░░░░░░░░░░░█
+█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄█';
         }
     
     }
