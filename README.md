@@ -2,10 +2,10 @@
 A console app that takes a text file of names and birthdays and returns a list of days when employees should get cake
 
 Setup:
-1. Clone repo
-2. `composer install`
-3. Open app folder in console
-4. Run `.\console cake-days file/to/path.txt` OR `php console cake-days file/to/path.txt`
+1. `git clone` repo
+2. `cd birthday-cake-app`
+3. `composer install`
+4. Run `./console cake-days file/to/path.txt` OR `php console cake-days file/to/path.txt`
 
 Given a file in format TXT or CSV
 With data in format [Person Name],[Date of Birth (yyyy-mm-dd)] (i.e. `Naomi, 1994-10-10`) (see nametest.txt for sample data)
