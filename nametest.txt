@@ -41,3 +41,7 @@ Wilhelm, 1997-03-11
 Lysander, 1997-08-19
 Romeo, 1997-10-16
 Oberon, 1999-11-10
+Mallory, 2000-01-06
+Ferdinand, 2000-01-07
+Valdeko, 2000-01-08
+Isaiah, 2000-01-09

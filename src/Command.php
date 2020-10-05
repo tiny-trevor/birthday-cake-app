@@ -367,9 +367,6 @@
                     $sm = 1;
                     $lg = 0;
                 }
-                
-                // For health reasons, the day after each cake must be cake-free.
-                $cake_free_day = (new Carbon($next_day))->addDay()->format('Y-m-d');
     
                 // If there is to be cake two days in a row, we instead provide one large cake on the second day.
                 // Any cakes due on a cakefree day are postponed to the next working day.
@@ -382,9 +379,9 @@
                     $lg = 1;
                     $sm = 0;
                     $names = $cakeday['names'] . ', '.$data[$next_cakeday]['names'];
-    
+                    
                     // For health reasons, the day after each cake must be cake-free.
-                    $cake_free_days[] = $cake_free_day;
+                    $cake_free_day = (new Carbon($next_day))->addDay()->format('Y-m-d');
                     
                 }
                 // Any cakes due on a cakefree day are postponed to the next working day.
@@ -400,18 +397,21 @@
                     $names = $cakeday['names'];
     
                     // For health reasons, the day after each cake must be cake-free.
-                    $cake_free_days[] = $cake_free_day;
+                    $cake_free_day = $skip_day->addDay()->format('Y-m-d');
                     
                 }
                 else {
                     // If the current cakeday date has already been processed, skip
-                    if(array_search($cakeday['date'], array_column($cake_days, 'date')))
+                    if(array_search($cakeday['date'], array_column($cake_days, 'date')) !== false)
                     {
                         continue;
                     }
     
                     $date = $cakeday['date'];
                     $names = $cakeday['names'];
+    
+                    // For health reasons, the day after each cake must be cake-free.
+                    $cake_free_day = (new Carbon($cakeday['date']))->addDay()->format('Y-m-d');
                 }
     
                 // Assign values to new array item
@@ -421,6 +421,8 @@
                 $cake_days[$array_num]['names'] = $names;
                 
                 $array_num++;
+                
+                $cake_free_days[] = $cake_free_day;
                 
             }
     
