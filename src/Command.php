@@ -354,19 +354,10 @@
             foreach($data as $cakeday) {
                 
                 $current_day = $cakeday['date'];
+                $cakes = $cakeday['cakes'];
     
                 // Get next day
                 $next_day = (new Carbon($cakeday['date']))->addDay()->format('Y-m-d');
-    
-                //If two or more cakes days coincide, we instead provide one large cake to share.
-                if($cakeday['cakes'] > 1) {
-                    $sm = 0;
-                    $lg = 1;
-                }
-                else {
-                    $sm = 1;
-                    $lg = 0;
-                }
     
                 // If there is to be cake two days in a row, we instead provide one large cake on the second day.
                 // Any cakes due on a cakefree day are postponed to the next working day.
@@ -376,8 +367,7 @@
                     $next_cakeday = array_search($next_day, array_column($data, 'date'));
     
                     $date = $next_day;
-                    $lg = 1;
-                    $sm = 0;
+                    $cakes = $cakeday['cakes'] + $data[$next_cakeday]['cakes'];
                     $names = $cakeday['names'] . ', '.$data[$next_cakeday]['names'];
                     
                     // For health reasons, the day after each cake must be cake-free.
@@ -416,8 +406,7 @@
     
                 // Assign values to new array item
                 $cake_days[$array_num]['date'] = $date;
-                $cake_days[$array_num]['sm'] = $sm;
-                $cake_days[$array_num]['lg'] = $lg;
+                $cake_days[$array_num]['cakes'] = $cakes;
                 $cake_days[$array_num]['names'] = $names;
                 
                 $array_num++;
@@ -427,7 +416,6 @@
             }
     
             usort($cake_days, array($this,'sortDates'));
-            
             return $cake_days;
         }
         
@@ -461,7 +449,22 @@
                 fputcsv($file, $headers);
     
                 foreach($data as $datum) {
-                    fputcsv($file, $datum);
+    
+                    $csv_line['date'] = $datum['date'];
+                    
+                    //If two or more cakes days coincide, we instead provide one large cake to share.
+                    if($datum['cakes'] > 1) {
+                        $csv_line['sm'] = 0;
+                        $csv_line['lg'] = 1;
+                    }
+                    else {
+                        $csv_line['sm'] = 1;
+                        $csv_line['lg'] = 0;
+                    }
+                    
+                    $csv_line['names'] = $datum['names'];
+                    
+                    fputcsv($file, $csv_line);
                 }
     
                 fclose($file);
